@@ -1,0 +1,145 @@
+genrule(
+    name = "rootfs",
+    srcs = [
+        "config.plist",
+        "@com_github_acidanthera_lilu//:all",
+        "@com_github_acidanthera_virtualsmc//:all",
+        "@com_github_cloverhackycolor_cloverbootloader//:all",
+        "@com_github_pmj_virtio_net_osx//:all",
+    ],
+    outs = ["rootfs.zip"],
+    cmd = """\
+sandbox=$${PWD}
+work=$$(mktemp -d $(RULEDIR)/.work.XXXXXX)
+function clean() {
+    rm -rf $${work}
+}
+trap clean EXIT
+
+mkdir -p \
+    $${work}/EFI/CLOVER/drivers \
+    $${work}/EFI/CLOVER/kexts/Other
+
+cp $(execpath :config.plist) $${work}/EFI/CLOVER
+
+# Bootloader
+cp -rf external/com_github_cloverhackycolor_cloverbootloader/Bootloaders/x64/boot7 $${work}/BOOT
+
+tocopy=(
+    "EFI/BOOT"
+    "EFI/CLOVER/CLOVERX64.efi"
+    "EFI/CLOVER/drivers/BIOS"
+    "EFI/CLOVER/drivers/UEFI"
+    "EFI/CLOVER/tools"
+)
+for f in "$${tocopy[@]}"; do
+    cp -rf external/com_github_cloverhackycolor_cloverbootloader/$${f} $${work}/$${f}
+done
+
+bios_drivers=(
+    "FileSystem/ApfsDriverLoader.efi"
+)
+for d in "$${bios_drivers[@]}"; do
+    cp external/com_github_cloverhackycolor_cloverbootloader/EFI/CLOVER/drivers/off/BIOS/$${d} $${work}/EFI/CLOVER/drivers/BIOS/
+done
+
+efi_drivers=(
+    "FileSystem/ApfsDriverLoader.efi"
+    "Other/PartitionDxe.efi"
+    # "MemoryFix/AptioMemoryFix.efi" # may or may not be needed, seems to be glitchy on VBox
+)
+for d in "$${efi_drivers[@]}"; do
+    cp external/com_github_cloverhackycolor_cloverbootloader/EFI/CLOVER/drivers/off/UEFI/$${d} $${work}/EFI/CLOVER/drivers/UEFI/
+done
+
+
+# Remove SMCHelper as it will be replaced by VirtualSMC
+rm -f $${work}/EFI/CLOVER/drivers/*/SMCHelper.efi
+cp -rf external/com_github_acidanthera_lilu/Lilu.kext $${work}/EFI/CLOVER/kexts/Other/
+cp -f external/com_github_acidanthera_virtualsmc/Drivers/VirtualSmc.efi $${work}/EFI/CLOVER/drivers/UEFI/
+cp -f external/com_github_acidanthera_virtualsmc/Drivers/VirtualSmc.efi $${work}/EFI/CLOVER/drivers/BIOS/
+cp -rf external/com_github_acidanthera_virtualsmc/Kexts/VirtualSMC.kext $${work}/EFI/CLOVER/kexts/Other/
+
+# Install virtio-net-osx
+cp -rf $${sandbox}/external/com_github_pmj_virtio_net_osx/bin/virtio-net.kext $${work}/EFI/CLOVER/kexts/Other/
+
+(
+    cd $${work}
+    zip -qq -0 -r $${sandbox}/$(@) *
+)
+""",
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "image.noboot",
+    srcs = [
+        ":rootfs",
+        "@com_github_cloverhackycolor_cloverbootloader//:all",
+    ],
+    outs = ["clover.noboot.raw"],
+    cmd = """\
+work=$$(mktemp -d $(RULEDIR)/.work.XXXXXX)
+function clean() {
+    rm -rf $${work}
+}
+trap clean EXIT
+unzip -qq $(execpath :rootfs) -d $${work}
+hdiutil create \
+    -format UDRW \
+    -fs FAT32 \
+    -layout MBRSPUD \
+    -volname Clover \
+    -srcFolder $${work} \
+    clover
+mv clover.dmg $(@)
+""",
+    tags = ["no-sandbox"],
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "image",
+    srcs = [
+        "clover.vmdk.tpl",
+        ":image.noboot",
+        "@com_github_cloverhackycolor_cloverbootloader//:all",
+    ],
+    outs = [
+        "clover.vmdk",
+        "clover.raw",
+    ],
+    cmd = """\
+cloverpkg=external/com_github_cloverhackycolor_cloverbootloader
+vmdk=$(location :clover.vmdk)
+image=$(location :clover.raw)
+cp $(location :image.noboot) $${image}
+chmod +w $${image}
+
+# Write boot0, only 440 bytes
+dd if=$${cloverpkg}/BootSectors/boot0ss \
+    of=$${image} \
+    bs=440 \
+    count=1 \
+    conv=notrunc 2> /dev/null
+
+# Update FAT32 parition boot record with boot code
+cp $${cloverpkg}/BootSectors/boot1f32 boot1f32.bin
+dd if=$${image} of=pbr.bin skip=1 count=1 bs=512 2> /dev/null
+dd if=pbr.bin of=boot1f32.bin skip=3 seek=3 bs=1 count=87 conv=notrunc 2> /dev/null
+dd if=boot1f32.bin of=$${image} seek=1 count=1 bs=512 conv=notrunc 2> /dev/null
+
+# For good measure, mark the partition active
+fdisk -e $${image} <<-EOF 2>&1 > /dev/null
+flag 1
+write
+quit
+EOF
+
+image_size=$$(stat -f '%z' $${image})
+image_blocks=$$(( $${image_size} / 512 ))
+
+sed "s/%BLOCKS%/$${image_blocks}/g" < $(location :clover.vmdk.tpl) > $${vmdk}
+""",
+    visibility = ["//visibility:public"],
+)
