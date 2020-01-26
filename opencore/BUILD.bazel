@@ -1,0 +1,115 @@
+genrule(
+    name = "rootfs",
+    srcs = [
+        "config.plist",
+        "@com_github_acidanthera_lilu//:all",
+        "@com_github_acidanthera_virtualsmc//:all",
+        "@com_github_acidanthera_opencore//:all",
+        "@com_github_acidanthera_applesupport//:all",
+        "@com_github_pmj_virtio_net_osx//:all",
+    ],
+    outs = ["rootfs.zip"],
+    cmd = """\
+sandbox=$${PWD}
+work=$$(mktemp -d $(RULEDIR)/.work.XXXXXX)
+function clean() {
+    rm -rf $${work}
+}
+trap clean EXIT
+
+# EFI
+cp -rf external/com_github_acidanthera_opencore/EFI $${work}/
+
+# Bootloader
+cp -rf external/com_github_acidanthera_opencore/Utilities/BootInstall/boot $${work}/
+
+# Apple support
+cp -rf external/com_github_acidanthera_applesupport/Drivers/*.efi $${work}/EFI/OC/Drivers/
+
+mkdir -p $${work}/EFI/OC/Kexts
+cp -rf external/com_github_acidanthera_lilu/Lilu.kext $${work}/EFI/OC/Kexts/
+cp -f external/com_github_acidanthera_virtualsmc/Drivers/VirtualSmc.efi $${work}/EFI/OC/Drivers/
+cp -rf external/com_github_acidanthera_virtualsmc/Kexts/VirtualSMC.kext $${work}/EFI/OC/Kexts/
+
+# Install virtio-net-osx
+cp -rf $${sandbox}/external/com_github_pmj_virtio_net_osx/bin/virtio-net.kext $${work}/EFI/OC/Kexts/
+
+
+cp -rf $(location config.plist) $${work}/EFI/OC/
+
+(
+    cd $${work}
+    zip -qq -0 -r $${sandbox}/$(@) *
+)
+""",
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "image.noboot",
+    srcs = [":rootfs"],
+    outs = ["opencore.noboot.raw"],
+    cmd = """\
+work=$$(mktemp -d $(RULEDIR)/.work.XXXXXX)
+function clean() {
+    rm -rf $${work}
+}
+trap clean EXIT
+unzip -qq $(execpath :rootfs) -d $${work}
+hdiutil create \
+    -format UDRW \
+    -fs FAT32 \
+    -layout MBRSPUD \
+    -volname OpenCore \
+    -srcFolder $${work} \
+    opencore
+mv opencore.dmg $(@)
+""",
+    tags = ["no-sandbox"],
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "image",
+    srcs = [
+        "opencore.vmdk.tpl",
+        ":image.noboot",
+        "@com_github_acidanthera_opencore//:all",
+    ],
+    outs = [
+        "opencore.vmdk",
+        "opencore.raw",
+    ],
+    cmd = """\
+ocboot=external/com_github_acidanthera_opencore/Utilities/BootInstall
+image=$(location :opencore.raw)
+cp $(location :image.noboot) $${image}
+chmod +w $${image}
+
+# Write boot0, only 440 bytes
+dd if=$${ocboot}/boot0af \
+    of=$${image} \
+    bs=440 \
+    count=1 \
+    conv=notrunc 2> /dev/null
+
+# Update FAT32 parition boot record with boot code
+cp $${ocboot}/boot1f32 boot1f32.bin
+dd if=$${image} of=pbr.bin skip=1 count=1 bs=512 2> /dev/null
+dd if=pbr.bin of=boot1f32.bin skip=3 seek=3 bs=1 count=87 conv=notrunc 2> /dev/null
+dd if=boot1f32.bin of=$${image} seek=1 count=1 bs=512 conv=notrunc 2> /dev/null
+
+# For good measure, mark the partition active
+fdisk -e $${image} <<-EOF 2>&1 > /dev/null
+flag 1
+write
+quit
+EOF
+
+image_size=$$(stat -f '%z' $${image})
+image_blocks=$$(( $${image_size} / 512 ))
+
+sed "s/%BLOCKS%/$${image_blocks}/g" < $(location :opencore.vmdk.tpl) > $(location :opencore.vmdk)
+""",
+    visibility = ["//visibility:public"],
+)
