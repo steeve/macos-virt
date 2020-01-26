@@ -630,19 +630,17 @@
 		<key>Generic</key>
 		<dict>
 			<key>MLB</key>
-			<string>M000000000001</string>
+			<string>C07235301CDDKP2CB</string>
 			<key>ROM</key>
 			<data>ESIzAAAA</data>
 			<key>SpoofVendor</key>
 			<true/>
-			<key>SupportsCsm</key>
-			<false/>
 			<key>SystemProductName</key>
-			<string>MacPro5,1</string>
+			<string>Macmini5,1</string>
 			<key>SystemSerialNumber</key>
-			<string>W0000000001</string>
+			<string>C07J9HZYDJD0</string>
 			<key>SystemUUID</key>
-			<string>00000000-0000-0000-0000-000000000000</string>
+			<string>7D96E0D2-6748-4CB0-9656-DFF70CF02B32</string>
 		</dict>
 		<key>UpdateDataHub</key>
 		<true/>
