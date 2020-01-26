@@ -50,3 +50,17 @@ new_git_repository(
     remote = "https://github.com/pmj/virtio-net-osx.git",
     shallow_since = "1388123323 -0800",
 )
+
+http_archive(
+    name = "com_github_acidanthera_opencore",
+    build_file_content = _EXPORTS_ALL,
+    sha256 = "97be3932f2fc294e2f6d3ce9ee3fced48d24f7f2bbf0b7869d89706c72baafa8",
+    urls = ["https://github.com/acidanthera/OpenCorePkg/releases/download/0.5.4/OpenCore-0.5.4-DEBUG.zip"],
+)
+
+http_archive(
+    name = "com_github_acidanthera_applesupport",
+    build_file_content = _EXPORTS_ALL,
+    sha256 = "80bee4d37e4eadbfa6905aa811b7cb9ac433be58a0c8dd73e7c2c4630dce45ce",
+    urls = ["https://github.com/acidanthera/AppleSupportPkg/releases/download/2.1.5/AppleSupport-2.1.5-DEBUG.zip"],
+)
