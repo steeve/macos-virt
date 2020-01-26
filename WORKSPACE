@@ -11,37 +11,42 @@ filegroup(
 
 http_archive(
     name = "com_github_cloverhackycolor_cloverbootloader",
-    url = "https://github.com/CloverHackyColor/CloverBootloader/releases/download/5102/CloverV2-5102.zip",
-    strip_prefix = "CloverV2",
     build_file_content = _EXPORTS_ALL,
+    sha256 = "730f72bf139f017479cc22c17c64f47367212310e08c484ff46c02b3a44efeba",
+    strip_prefix = "CloverV2",
+    urls = ["https://github.com/CloverHackyColor/CloverBootloader/releases/download/5102/CloverV2-5102.zip"],
 )
 
 http_archive(
     name = "com_github_acidanthera_lilu",
-    url = "https://github.com/acidanthera/Lilu/releases/download/1.4.0/Lilu-1.4.0-RELEASE.zip",
     build_file_content = _EXPORTS_ALL,
+    sha256 = "f2ea252814449f5297bcfdbee9d771c73329f1c7e7e48659098589ecffd759c9",
+    urls = ["https://github.com/acidanthera/Lilu/releases/download/1.4.0/Lilu-1.4.0-RELEASE.zip"],
 )
 
 http_archive(
     name = "com_github_acidanthera_virtualsmc",
-    url = "https://github.com/acidanthera/VirtualSMC/releases/download/1.0.9/VirtualSMC-1.0.9-RELEASE.zip",
     build_file_content = _EXPORTS_ALL,
+    sha256 = "ba368c4be95cada8491760bb4dfddc6832dc0f7bae6f9a611ffd5862236341f9",
+    urls = ["https://github.com/acidanthera/VirtualSMC/releases/download/1.0.9/VirtualSMC-1.0.9-RELEASE.zip"],
 )
 
 http_file(
     name = "ovmf_code",
+    sha256 = "81ede7af3351a1710a4d4a35655fac10bedb11ae3484ae785820803a5bf69829",
     urls = ["https://cdn.download.clearlinux.org/image/OVMF_CODE.fd"],
 )
 
 http_file(
     name = "ovmf_vars",
+    sha256 = "5d2ac383371b408398accee7ec27c8c09ea5b74a0de0ceea6513388b15be5d1e",
     urls = ["https://cdn.download.clearlinux.org/image/OVMF_VARS.fd"],
 )
 
 new_git_repository(
     name = "com_github_pmj_virtio_net_osx",
+    build_file_content = _EXPORTS_ALL,
     commit = "31b4f8e27c077f8c1234f0923a9698330b18b655",
     remote = "https://github.com/pmj/virtio-net-osx.git",
     shallow_since = "1388123323 -0800",
-    build_file_content = _EXPORTS_ALL,
 )
