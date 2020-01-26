@@ -73,10 +73,7 @@ cp -rf $${sandbox}/external/com_github_pmj_virtio_net_osx/bin/virtio-net.kext $$
 
 genrule(
     name = "image.noboot",
-    srcs = [
-        ":rootfs",
-        "@com_github_cloverhackycolor_cloverbootloader//:all",
-    ],
+    srcs = [":rootfs"],
     outs = ["clover.noboot.raw"],
     cmd = """\
 work=$$(mktemp -d $(RULEDIR)/.work.XXXXXX)
