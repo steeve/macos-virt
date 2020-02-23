@@ -5,7 +5,7 @@
 	<key>Boot</key>
 	<dict>
 		<key>Arguments</key>
-		<string>-v earlyprintk=serial serial=1 kext-dev-mode=1 debug=0x0a serverperfmode=1</string>
+		<string>-v keepsyms=1 earlyprintk=serial serial=1 kext-dev-mode=1 debug=0x10a</string>
 		<key>DefaultVolume</key>
 		<string>macOS</string>
 		<key>Log</key>
