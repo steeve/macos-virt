@@ -1,0 +1,101 @@
+kernel:
+  image: linuxkit/kernel:5.4.19
+  cmdline: "console=tty0 console=ttyS0 console=ttyAMA0 console=ttysclp0"
+init:
+  - linuxkit/init:a4fcf333298f644dfac6adf680b83140927aa85e
+  - linuxkit/runc:69b4a35eaa22eba4990ee52cccc8f48f6c08ed03
+  - linuxkit/containerd:09553963ed9da626c25cf8acdf6d62ec37645412
+  - linuxkit/ca-certificates:v0.7
+onboot:
+  - name: rngd-oneshot
+    image: linuxkit/rngd:v0.7
+    command: ["/sbin/rngd", "-1"]
+  - name: sysctl
+    image: linuxkit/sysctl:v0.7
+  - name: modprobe-kvm
+    image: linuxkit/modprobe:v0.7
+    command: ["modprobe", "kvm-intel", "ignore_msrs=1"]
+  - name: modprobe-vhost_net
+    image: linuxkit/modprobe:v0.7
+    command: ["modprobe", "vhost_net"]
+  - name: modprobe-tun
+    image: linuxkit/modprobe:v0.7
+    command: ["modprobe", "tun"]
+  # - name: create-tun
+  #   image: linuxkit/ip:v0.7
+  #   command: ["/macos/tap0.sh"]
+  #   capabilities: ["all"]
+  #   binds:
+  #     - "/dev:/dev"
+  #     - "/macos:/macos"
+  - name: dhcpcd
+    image: linuxkit/dhcpcd:v0.7
+    command: ["/sbin/dhcpcd", "--nobackground", "-f", "/dhcpcd.conf", "-1"]
+  # - name: metadata
+  #   image: linuxkit/metadata:v0.7
+services:
+  - name: getty
+    image: linuxkit/getty:v0.7
+    env:
+      - INSECURE=true
+  - name: acpid
+    image: linuxkit/acpid:v0.7
+  - name: rngd
+    image: linuxkit/rngd:v0.7
+  - name: ntpd
+    image: linuxkit/openntpd:v0.7
+  - name: dhcpcd
+    image: linuxkit/dhcpcd:v0.7
+    command: ["/sbin/dhcpcd", "-f", "/dhcpcd.conf"]
+  - name: sshd
+    image: linuxkit/sshd:v0.7
+    binds:
+      - /etc/resolv.conf:/etc/resolv.conf
+      - /run:/run
+      - /tmp:/tmp
+      - /etc:/hostroot/etc
+      - /usr/bin/ctr:/usr/bin/ctr
+      - /usr/bin/runc:/usr/bin/runc
+      - /containers:/containers
+      - /var/log:/var/log
+      - /dev:/dev
+      - /sys:/sys
+      - /macos:/macos
+      - /macos/sshkeys:/root/.ssh/authorized_keys:ro
+      # - /run/config/ssh/authorized_keys:/root/.ssh/authorized_keys:ro
+  - name: qemu
+    image: linuxkit/qemu:68b072e1ae36415cb76eea610de508dbf2bbec7c
+    command: ["/macos/booter"]
+    capabilities: ["all"]
+    binds:
+      - "/dev/ttyS0:/dev/ttyS0"
+      - "/dev/kvm:/dev/kvm"
+      - "/dev/sdb:/dev/sdb"
+      - "/dev/net/tun:/dev/net/tun"
+      - "/dev/vhost-net:/dev/vhost-net"
+      - "/macos:/macos"
+files:
+  - path: "/macos/sshkeys"
+    source: "/Users/steeve/.ssh/id_rsa.pub"
+    mode: "0400"
+  - path: etc/linuxkit-config
+    metadata: yaml
+  - path: "macos/OVMF_CODE.fd"
+    source: "@OVMF_CODE@"
+    mode: "0666"
+  - path: "macos/OVMF_VARS.fd"
+    source: "@OVMF_VARS@"
+    mode: "0666"
+  - path: "macos/bootloader.img"
+    source: "@BOOTLOADER@"
+    mode: "0666"
+  - path: "macos/booter"
+    source: "@MACOS_BOOT@"
+    mode: "0555"
+  - path: "macos/tap0.sh"
+    source: "@TAP@"
+    mode: "0555"
+trust:
+  org:
+    - linuxkit
+    - library

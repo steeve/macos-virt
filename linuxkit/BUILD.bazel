@@ -1,0 +1,43 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+
+go_binary(
+    name = "booter",
+    srcs = ["boot.go"],
+    importpath = "github.com/steeve/macos-virt/linuxkit",
+    goos = "linux",
+    goarch = "amd64",
+)
+
+genrule(
+    name = "boot",
+    srcs = [
+        ":booter",
+        "linuxkit.yaml",
+        "tap0.sh",
+        "//clover:image",
+        "@ovmf_code//file",
+        "@ovmf_vars//file",
+    ],
+    outs = ["boot.img"],
+    cmd = """\
+sed \
+    -e 's#@OVMF_CODE@#$(location @ovmf_code//file)#' \
+    -e 's#@OVMF_VARS@#$(location @ovmf_vars//file)#' \
+    -e 's#@BOOTLOADER@#$(location //clover:image)#' \
+    -e 's#@TAP@#$(location tap0.sh)#' \
+    -e 's#@MACOS_BOOT@#$(location :booter)#' \
+    < $(location linuxkit.yaml) > tmp.yaml
+
+$(location @com_github_linuxkit_linuxkit//file) build \
+    -format raw-bios \
+    -dir $(RULEDIR) \
+    -name boot \
+    tmp.yaml
+
+mv $(RULEDIR)/boot-bios.img $(@)
+""",
+    tools = [
+        "@com_github_linuxkit_linuxkit//file",
+    ],
+    visibility = ["//visibility:public"],
+)

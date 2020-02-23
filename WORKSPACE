@@ -64,3 +64,25 @@ http_archive(
     sha256 = "80bee4d37e4eadbfa6905aa811b7cb9ac433be58a0c8dd73e7c2c4630dce45ce",
     urls = ["https://github.com/acidanthera/AppleSupportPkg/releases/download/2.1.5/AppleSupport-2.1.5-DEBUG.zip"],
 )
+
+http_file(
+    name = "com_github_linuxkit_linuxkit",
+    urls = ["https://github.com/linuxkit/linuxkit/releases/download/v0.7/linuxkit-darwin-amd64"],
+    sha256 = "9ea7fd7c6ba946b06ba398ec342b9f6fb5723f9063dcb94e70f3eac9d8cee179",
+    executable = True,
+)
+
+http_archive(
+    name = "io_bazel_rules_go",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.21.3/rules_go-v0.21.3.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.21.3/rules_go-v0.21.3.tar.gz",
+    ],
+    sha256 = "af04c969321e8f428f63ceb73463d6ea817992698974abeff0161e069cd08bd6",
+)
+
+load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_toolchains")
+
+go_rules_dependencies()
+
+go_register_toolchains()
