@@ -98,17 +98,14 @@ mv clover.dmg $(@)
 genrule(
     name = "image",
     srcs = [
-        "clover.vmdk.tpl",
         ":image.noboot",
         "@com_github_cloverhackycolor_cloverbootloader//:all",
     ],
     outs = [
-        "clover.vmdk",
         "clover.raw",
     ],
     cmd = """\
 cloverpkg=external/com_github_cloverhackycolor_cloverbootloader
-vmdk=$(location :clover.vmdk)
 image=$(location :clover.raw)
 cp $(location :image.noboot) $${image}
 chmod +w $${image}
@@ -132,11 +129,6 @@ flag 1
 write
 quit
 EOF
-
-image_size=$$(stat -f '%z' $${image})
-image_blocks=$$(( $${image_size} / 512 ))
-
-sed "s/%BLOCKS%/$${image_blocks}/g" < $(location :clover.vmdk.tpl) > $${vmdk}
 """,
     visibility = ["//visibility:public"],
 )
