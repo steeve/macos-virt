@@ -72,17 +72,15 @@ mv opencore.dmg $(@)
 genrule(
     name = "image",
     srcs = [
-        "opencore.vmdk.tpl",
         ":image.noboot",
         "@com_github_acidanthera_opencore//:all",
     ],
     outs = [
-        "opencore.vmdk",
-        "opencore.raw",
+        "bootloader.raw",
     ],
     cmd = """\
 ocboot=external/com_github_acidanthera_opencore/Utilities/BootInstall
-image=$(location :opencore.raw)
+image=$(location :bootloader.raw)
 cp $(location :image.noboot) $${image}
 chmod +w $${image}
 
@@ -106,10 +104,6 @@ write
 quit
 EOF
 
-image_size=$$(stat -f '%z' $${image})
-image_blocks=$$(( $${image_size} / 512 ))
-
-sed "s/%BLOCKS%/$${image_blocks}/g" < $(location :opencore.vmdk.tpl) > $(location :opencore.vmdk)
 """,
     visibility = ["//visibility:public"],
 )
