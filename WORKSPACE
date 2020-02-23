@@ -12,9 +12,9 @@ filegroup(
 http_archive(
     name = "com_github_cloverhackycolor_cloverbootloader",
     build_file_content = _EXPORTS_ALL,
-    sha256 = "730f72bf139f017479cc22c17c64f47367212310e08c484ff46c02b3a44efeba",
+    sha256 = "9a909f44c3000caae6a6afcd6487d4041c0887899a25e9ccd958902ec30c504e",
     strip_prefix = "CloverV2",
-    urls = ["https://github.com/CloverHackyColor/CloverBootloader/releases/download/5102/CloverV2-5102.zip"],
+    urls = ["https://github.com/CloverHackyColor/CloverBootloader/releases/download/5104/CloverV2-5104.zip"],
 )
 
 http_archive(
@@ -54,8 +54,8 @@ new_git_repository(
 http_archive(
     name = "com_github_acidanthera_opencore",
     build_file_content = _EXPORTS_ALL,
-    sha256 = "97be3932f2fc294e2f6d3ce9ee3fced48d24f7f2bbf0b7869d89706c72baafa8",
-    urls = ["https://github.com/acidanthera/OpenCorePkg/releases/download/0.5.4/OpenCore-0.5.4-DEBUG.zip"],
+    sha256 = "21d242a5964d824c076095427ee1191414634f1f848a12bb536610b6285993df",
+    urls = ["https://github.com/acidanthera/OpenCorePkg/releases/download/0.5.5/OpenCore-0.5.5-DEBUG.zip"],
 )
 
 http_archive(
