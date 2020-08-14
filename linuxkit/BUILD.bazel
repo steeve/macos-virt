@@ -9,32 +9,27 @@ go_binary(
 )
 
 genrule(
-    name = "boot",
+    name = "image",
     srcs = [
-        ":booter",
+        "//linuxkit/boot:booter",
+        "//opencore:image",
         "linuxkit.yaml",
-        "tap0.sh",
-        "//clover:image",
-        "@ovmf_code//file",
-        "@ovmf_vars//file",
     ],
-    outs = ["boot.img"],
+    outs = ["linukit.img"],
     cmd = """\
 sed \
-    -e 's#@OVMF_CODE@#$(location @ovmf_code//file)#' \
-    -e 's#@OVMF_VARS@#$(location @ovmf_vars//file)#' \
-    -e 's#@BOOTLOADER@#$(location //clover:image)#' \
-    -e 's#@TAP@#$(location tap0.sh)#' \
-    -e 's#@MACOS_BOOT@#$(location :booter)#' \
+    -e 's#@USER_HOME@#~#' \
+    -e 's#@BOOTLOADER@#$(location //opencore:image)#' \
+    -e 's#@MACOS_BOOT@#$(location //linuxkit/boot:booter)#' \
     < $(location linuxkit.yaml) > tmp.yaml
 
 $(location @com_github_linuxkit_linuxkit//file) build \
-    -format raw-bios \
+    -format raw-efi \
     -dir $(RULEDIR) \
     -name boot \
     tmp.yaml
 
-mv $(RULEDIR)/boot-bios.img $(@)
+mv $(RULEDIR)/boot-efi.img $(@)
 """,
     tools = [
         "@com_github_linuxkit_linuxkit//file",

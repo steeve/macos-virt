@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+
+go_binary(
+    name = "booter",
+    srcs = [
+        "boot.go",
+        "modules.go",
+        "nat.go",
+        "qemu.go",
+        "utils.go",
+    ],
+    importpath = "github.com/steeve/macos-virt/linuxkit/boot",
+    goos = "linux",
+    goarch = "amd64",
+    visibility = ["//linuxkit:__subpackages__"],
+)
