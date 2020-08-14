@@ -2,8 +2,10 @@ genrule(
     name = "rootfs",
     srcs = [
         "config.plist",
+        "startup.nsh",
         "@com_github_acidanthera_lilu//:all",
         "@com_github_acidanthera_virtualsmc//:all",
+        "@com_github_acidanthera_virtualsmc_src//:all",
         "@com_github_cloverhackycolor_cloverbootloader//:all",
         "@com_github_pmj_virtio_net_osx//:all",
     ],
@@ -21,9 +23,12 @@ mkdir -p \
     $${work}/EFI/CLOVER/kexts/Other
 
 cp $(execpath :config.plist) $${work}/EFI/CLOVER
+# cp $(execpath :startup.nsh) $${work}/
 
 # Bootloader
 cp -rf external/com_github_cloverhackycolor_cloverbootloader/Bootloaders/x64/boot7 $${work}/BOOT
+
+mkdir -p $${work}/EFI/CLOVER/ACPI/origin
 
 tocopy=(
     "EFI/BOOT"
@@ -46,7 +51,6 @@ done
 efi_drivers=(
     "FileSystem/ApfsDriverLoader.efi"
     "Other/PartitionDxe.efi"
-    # "MemoryFix/AptioMemoryFix.efi" # may or may not be needed, seems to be glitchy on VBox
 )
 for d in "$${efi_drivers[@]}"; do
     cp external/com_github_cloverhackycolor_cloverbootloader/EFI/CLOVER/drivers/off/UEFI/$${d} $${work}/EFI/CLOVER/drivers/UEFI/
@@ -56,8 +60,8 @@ done
 # Remove SMCHelper as it will be replaced by VirtualSMC
 rm -f $${work}/EFI/CLOVER/drivers/*/SMCHelper.efi
 cp -rf external/com_github_acidanthera_lilu/Lilu.kext $${work}/EFI/CLOVER/kexts/Other/
-cp -f external/com_github_acidanthera_virtualsmc/Drivers/VirtualSmc.efi $${work}/EFI/CLOVER/drivers/UEFI/
-cp -f external/com_github_acidanthera_virtualsmc/Drivers/VirtualSmc.efi $${work}/EFI/CLOVER/drivers/BIOS/
+cp -f external/com_github_acidanthera_virtualsmc_src/EfiDriver/VirtualSmc.efi $${work}/EFI/CLOVER/drivers/UEFI/
+cp -f external/com_github_acidanthera_virtualsmc_src/EfiDriver/VirtualSmc.efi $${work}/EFI/CLOVER/drivers/BIOS/
 cp -rf external/com_github_acidanthera_virtualsmc/Kexts/VirtualSMC.kext $${work}/EFI/CLOVER/kexts/Other/
 
 # Install virtio-net-osx
