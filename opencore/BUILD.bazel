@@ -1,12 +1,17 @@
+filegroup(
+    name = "ACPI",
+    srcs = glob(["ACPI/**"]),
+)
+
 genrule(
     name = "rootfs",
     srcs = [
         "config.plist",
+        "startup.nsh",
+        ":ACPI",
         "@com_github_acidanthera_lilu//:all",
-        "@com_github_acidanthera_virtualsmc//:all",
         "@com_github_acidanthera_opencore//:all",
-        "@com_github_acidanthera_applesupport//:all",
-        "@com_github_pmj_virtio_net_osx//:all",
+        "@com_github_acidanthera_virtualsmc//:all",
     ],
     outs = ["rootfs.zip"],
     cmd = """\
@@ -19,26 +24,24 @@ trap clean EXIT
 
 # EFI
 cp -rf external/com_github_acidanthera_opencore/EFI $${work}/
+cp $(execpath :startup.nsh) $${work}/
 
 # Bootloader
-cp -rf external/com_github_acidanthera_opencore/Utilities/BootInstall/boot $${work}/
-
-# Apple support
-cp -rf external/com_github_acidanthera_applesupport/Drivers/*.efi $${work}/EFI/OC/Drivers/
+cp -rf external/com_github_acidanthera_opencore/Utilities/LegacyBoot/boot $${work}/
 
 mkdir -p $${work}/EFI/OC/Kexts
 cp -rf external/com_github_acidanthera_lilu/Lilu.kext $${work}/EFI/OC/Kexts/
-cp -f external/com_github_acidanthera_virtualsmc/Drivers/VirtualSmc.efi $${work}/EFI/OC/Drivers/
 cp -rf external/com_github_acidanthera_virtualsmc/Kexts/VirtualSMC.kext $${work}/EFI/OC/Kexts/
-
-# Install virtio-net-osx
-cp -rf $${sandbox}/external/com_github_pmj_virtio_net_osx/bin/virtio-net.kext $${work}/EFI/OC/Kexts/
-
-
 cp -rf $(location config.plist) $${work}/EFI/OC/
+
+mkdir -p $${work}/EFI/OC/ACPI
+cp -f $(locations :ACPI) $${work}/EFI/OC/ACPI/
+
+mv -f $${work}/EFI/BOOT/BOOTx64.efi $${work}/EFI/BOOT/BOOTX64.efi
 
 (
     cd $${work}
+    find .
     zip -qq -0 -r $${sandbox}/$(@) *
 )
 """,
@@ -46,9 +49,52 @@ cp -rf $(location config.plist) $${work}/EFI/OC/
 )
 
 genrule(
+    name = "rootfs2",
+    srcs = [
+        "config.plist",
+        "startup.nsh",
+        ":ACPI",
+        "@com_github_acidanthera_opencore//:all",
+    ] + glob(["kexts/**"]),
+    outs = ["rootfs2.zip"],
+    cmd = """\
+sandbox=$${PWD}
+work=$$(mktemp -d $(RULEDIR)/.work.XXXXXX)
+function clean() {
+    rm -rf $${work}
+}
+trap clean EXIT
+
+# EFI
+cp -rf external/com_github_acidanthera_opencore/EFI $${work}/
+cp $(execpath :startup.nsh) $${work}/
+
+# Bootloader
+cp -rf external/com_github_acidanthera_opencore/Utilities/LegacyBoot/boot $${work}/
+
+mkdir -p $${work}/EFI/OC/Kexts
+cp -rf ./opencore/kexts/* $${work}/EFI/OC/Kexts/
+cp -rf $(location config.plist) $${work}/EFI/OC/
+
+mkdir -p $${work}/EFI/OC/ACPI
+cp -f $(locations :ACPI) $${work}/EFI/OC/ACPI/
+
+mv -f $${work}/EFI/BOOT/BOOTx64.efi $${work}/EFI/BOOT/BOOTX64.efi
+
+(
+    cd $${work}
+    find .
+    zip -qq -0 -r $${sandbox}/$(@) *
+)
+""",
+    visibility = ["//visibility:public"],
+)
+
+
+genrule(
     name = "image.noboot",
     srcs = [":rootfs"],
-    outs = ["opencore.noboot.raw"],
+    outs = ["opencore.noboot.img"],
     cmd = """\
 work=$$(mktemp -d $(RULEDIR)/.work.XXXXXX)
 function clean() {
@@ -76,16 +122,16 @@ genrule(
         "@com_github_acidanthera_opencore//:all",
     ],
     outs = [
-        "bootloader.raw",
+        "opencore.img",
     ],
     cmd = """\
-ocboot=external/com_github_acidanthera_opencore/Utilities/BootInstall
-image=$(location :bootloader.raw)
-cp $(location :image.noboot) $${image}
+ocboot=external/com_github_acidanthera_opencore/Utilities/LegacyBoot
+image=$(location :opencore.img)
+cp -f $(location :image.noboot) $${image}
 chmod +w $${image}
 
 # Write boot0, only 440 bytes
-dd if=$${ocboot}/boot0af \
+dd if=$${ocboot}/boot0 \
     of=$${image} \
     bs=440 \
     count=1 \
@@ -103,7 +149,6 @@ flag 1
 write
 quit
 EOF
-
 """,
     visibility = ["//visibility:public"],
 )
