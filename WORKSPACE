@@ -53,13 +53,42 @@ http_file(
     executable = True,
 )
 
+new_git_repository(
+    name = "com_github_munki_macadmin_scripts",
+    build_file_content = """\
+py_binary(
+    name = "installinstallmacos",
+    srcs = ["installinstallmacos.py"],
+    python_version = "PY2",
+    visibility = ["//visibility:public"],
+)
+    """,
+    shallow_since = "1596052888 -0700",
+    commit = "e71ade7e92f4aaf5d50cfe488fadb12ddb107d55",
+    remote = "https://github.com/munki/macadmin-scripts",
+)
+
+new_git_repository(
+    name = "com_github_magervalp_autodmg",
+    remote = "https://github.com/MagerValp/AutoDMG.git",
+    commit = "e5fc641b2f38be742ab083d5d5f1cb952a30af89",
+    build_file_content = """\
+sh_binary(
+    name = "installesdtodmg",
+    srcs = ["AutoDMG/installesdtodmg.sh"],
+    visibility = ["//visibility:public"],
+)
+    """,
+    shallow_since = "1566401762 +0200",
+)
+
 http_archive(
     name = "io_bazel_rules_go",
+    sha256 = "2697f6bc7c529ee5e6a2d9799870b9ec9eaeb3ee7d70ed50b87a2c2c97e13d9e",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.21.3/rules_go-v0.21.3.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.21.3/rules_go-v0.21.3.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.23.8/rules_go-v0.23.8.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.23.8/rules_go-v0.23.8.tar.gz",
     ],
-    sha256 = "af04c969321e8f428f63ceb73463d6ea817992698974abeff0161e069cd08bd6",
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_toolchains")
