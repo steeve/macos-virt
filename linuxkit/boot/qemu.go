@@ -8,6 +8,12 @@ import (
 	"syscall"
 )
 
+const (
+	KB = 1024
+	MB = 1024 * KB
+	GB = 1024 * MB
+)
+
 func cpuflags() string {
 	flags := []string{
 		"host",
@@ -16,25 +22,8 @@ func cpuflags() string {
 		"vmware-cpuid-freq=on",
 		"rdtscp",
 		"check",
-
-		// "+aes",
-		// "+avx",
-		// "+avx2",
-		// "+bmi1",
-		// "+bmi2",
-		// "+invtsc",
-		// "+fma",
-		// "+hypervisor",
-		// // "+kvm_pv_eoi",
-		// // "+kvm_pv_unhalt",
-		// "+pcid",
-		// "+popcnt",
-		// "+smep",
-		// "+sse4.2",
-		// "+sse4a",
-		// "+ssse3",
-		// "+xsave",
-		// "+xsaveopt",
+		"+invtsc", // needed on intel or else the clock runs too quick
+		"+hypervisor",
 	}
 
 	if flag := virtualizationFlag(); flag != "" {
@@ -45,12 +34,26 @@ func cpuflags() string {
 }
 
 func memory() string {
-	return fmt.Sprintf("%d", 4096)
+	si := &syscall.Sysinfo_t{}
+	if err := syscall.Sysinfo(si); err != nil {
+		panic(err)
+	}
+	totalRamMb := si.Totalram / MB
+	if totalRamMb < 2048 {
+		panic("the VM should have at least 2GB of memory")
+	}
+	// Leave 1GB for linux
+	return fmt.Sprintf("%d", totalRamMb-1024)
 }
 
 func smp() string {
-	return fmt.Sprintf("cpus=%d,maxcpus=%d", runtime.NumCPU()-1, runtime.NumCPU())
-	return fmt.Sprintf("sockets=1,cores=%d,threads=%d", (runtime.NumCPU()/2)-1, 2)
+	// real, used vcpus, leave one core for linux
+	cpus := runtime.NumCPU() - 1
+	// those are fake, disabled vcpus meant to make macOS happy with the CPU
+	// topology (must be an even number)
+	maxcpus := runtime.NumCPU()
+	maxcpus += maxcpus % 2
+	return fmt.Sprintf("cpus=%d,maxcpus=%d", cpus, maxcpus)
 }
 
 func opt(options []string) string {
