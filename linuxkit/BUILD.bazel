@@ -1,11 +1,24 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+load("//:utils.bzl", "flags_supplier")
+
+string_flag(
+    name = "format",
+    build_setting_default = "raw-efi",
+    visibility = ["//visibility:public"],
+)
+
+flags_supplier(
+    name = "flags",
+    flags = [":format"],
+)
 
 go_binary(
     name = "booter",
     srcs = ["boot.go"],
-    importpath = "github.com/steeve/macos-virt/linuxkit",
-    goos = "linux",
     goarch = "amd64",
+    goos = "linux",
+    importpath = "github.com/steeve/macos-virt/linuxkit",
 )
 
 genrule(
@@ -15,7 +28,7 @@ genrule(
         "//opencore:image",
         "linuxkit.yaml",
     ],
-    outs = ["linukit.img"],
+    outs = ["linuxkit.img"],
     cmd = """\
 sed \
     -e 's#@USER_HOME@#~#' \
@@ -23,16 +36,19 @@ sed \
     -e 's#@MACOS_BOOT@#$(location //linuxkit/boot:booter)#' \
     < $(location linuxkit.yaml) > tmp.yaml
 
+work=$$(mktemp -d $(RULEDIR)/.workXXXX)
+
 $(location @com_github_linuxkit_linuxkit//file) build \
-    -format raw-efi \
-    -dir $(RULEDIR) \
+    -format $(//linuxkit:format) \
+    -dir $${work} \
     -name boot \
     tmp.yaml
 
-mv $(RULEDIR)/boot-efi.img $(@)
+mv $$(find $${work} -type f | head -1) $(@)
 """,
     tools = [
         "@com_github_linuxkit_linuxkit//file",
     ],
+    toolchains = [":flags"],
     visibility = ["//visibility:public"],
 )

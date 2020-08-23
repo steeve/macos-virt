@@ -2,7 +2,9 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
 	"strings"
+	"syscall"
 )
 
 func virtualizationFlag() string {
@@ -34,6 +36,18 @@ func loadKvm() {
 		execCommand("modprobe", "kvm-amd")
 	default:
 		panic("CPU doesn't support virtualization (vmx or svm)")
+	}
+}
+
+func setupHugePages() {
+	if err := ioutil.WriteFile("/proc/sys/vm/nr_hugepages", []byte("4100"), 0666); err != nil {
+		panic(err)
+	}
+	if err := os.MkdirAll("/dev/hugepages", 0777); err != nil {
+		panic(err)
+	}
+	if err := syscall.Mount("hugetlbfs", "/dev/hugepages", "hugetlbfs", 0, "rw"); err != nil {
+		panic(err)
 	}
 }
 

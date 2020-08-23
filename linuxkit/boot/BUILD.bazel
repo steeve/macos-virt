@@ -9,8 +9,11 @@ go_binary(
         "qemu.go",
         "utils.go",
     ],
-    importpath = "github.com/steeve/macos-virt/linuxkit/boot",
-    goos = "linux",
     goarch = "amd64",
+    goos = "linux",
+    importpath = "github.com/steeve/macos-virt/linuxkit/boot",
     visibility = ["//linuxkit:__subpackages__"],
+    deps = [
+        "//linuxkit/boot/vm:go_default_library",
+    ],
 )

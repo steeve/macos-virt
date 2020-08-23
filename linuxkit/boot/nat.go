@@ -49,7 +49,8 @@ func setupIpTables() {
 		{"iptables", "-t", "nat", "-A", "POSTROUTING", "-o", hostDevice, "-j", "MASQUERADE"},
 		{"iptables", "-I", "FORWARD", "1", "-i", tapDevice, "-j", "ACCEPT"},
 		{"iptables", "-I", "FORWARD", "1", "-o", tapDevice, "-m", "state", "--state", "RELATED,ESTABLISHED", "-j", "ACCEPT"},
-		{"iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "--dport", "2022", "-j", "DNAT", "--to", guestIpAddr + ":22"},
+		{"iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "--dport", "10022", "-j", "DNAT", "--to", guestIpAddr + ":22"},
+		{"iptables", "-t", "nat", "-I", "PREROUTING", "-p", "tcp", "--dport", "15900", "-j", "DNAT", "--to", guestIpAddr + ":5900"},
 	})
 }
 

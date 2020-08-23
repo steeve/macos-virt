@@ -20,6 +20,14 @@ onboot:
       - "/dev:/dev"
       - "/lib:/lib"
       - "/macos:/macos"
+      - "/proc:/proc"
+      - "/sys:/sys"
+  # - name: hugepages
+  #   image: linuxkit/mount:v0.8
+  #   command: ["/macos/booter", "huge-pages"]
+  #   binds:
+  #     - "/dev:/dev"
+  #     - "/macos:/macos"
   - name: setupnat
     image: linuxkit/ip:v0.8
     command: ["/macos/booter", "setup-nat"]
@@ -64,7 +72,7 @@ services:
       - /macos/sshkeys:/root/.ssh/authorized_keys:ro
       # - /run/config/ssh/authorized_keys:/root/.ssh/authorized_keys:ro
   - name: qemu
-    image: tianon/qemu:5.1.0
+    image: steeve/qemu:5.1.0
     command: ["/macos/booter", "run-qemu"]
     capabilities: ["all"]
     binds:
@@ -76,7 +84,7 @@ services:
       - "/macos:/macos"
 files:
   - path: "/macos/sshkeys"
-    source: "~/.ssh/id_rsa.pub"
+    source: "/Users/steeve/.ssh/id_rsa.pub"
     mode: "0400"
   - path: etc/linuxkit-config
     metadata: yaml

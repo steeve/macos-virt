@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["vm.go"],
+    importpath = "github.com/steeve/macos-virt/linuxkit/boot/vm",
+    visibility = ["//linuxkit:__subpackages__"],
+    deps = [
+        "//linuxkit/boot/cpuinfo:go_default_library",
+    ],
+)
