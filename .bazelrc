@@ -1,0 +1,2 @@
+build:intel     --//opencore:cpu=intel
+build:amd       --//opencore:cpu=amd

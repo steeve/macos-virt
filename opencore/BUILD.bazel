@@ -1,3 +1,39 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+
+string_flag(
+    name = "cpu",
+    build_setting_default = "intel",
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "config.intel",
+    srcs = ["config.intel.plist"],
+)
+
+filegroup(
+    name = "config.amd",
+    srcs = ["config.amd.plist"],
+)
+
+config_setting(
+    name = "config_intel",
+    flag_values = {":cpu": "intel"},
+)
+
+config_setting(
+    name = "config_amd",
+    flag_values = {":cpu": "amd"},
+)
+
+alias(
+    name = "config",
+    actual = select({
+        ":config_intel": ":config.intel",
+        ":config_amd": ":config.amd",
+    }),
+)
+
 filegroup(
     name = "ACPI",
     srcs = glob(["ACPI/**"]),
@@ -6,7 +42,7 @@ filegroup(
 genrule(
     name = "rootfs",
     srcs = [
-        "config.plist",
+        "config",
         "startup.nsh",
         ":ACPI",
         "@com_github_acidanthera_lilu//:all",
@@ -27,12 +63,12 @@ cp -rf external/com_github_acidanthera_opencore/EFI $${work}/
 cp $(execpath :startup.nsh) $${work}/
 
 # Bootloader
-cp -rf external/com_github_acidanthera_opencore/Utilities/LegacyBoot/boot $${work}/
+# cp -rf external/com_github_acidanthera_opencore/Utilities/LegacyBoot/boot $${work}/
 
 mkdir -p $${work}/EFI/OC/Kexts
 cp -rf external/com_github_acidanthera_lilu/Lilu.kext $${work}/EFI/OC/Kexts/
 cp -rf external/com_github_acidanthera_virtualsmc/Kexts/VirtualSMC.kext $${work}/EFI/OC/Kexts/
-cp -rf $(location config.plist) $${work}/EFI/OC/
+cp -rf $(location :config) $${work}/EFI/OC/config.plist
 
 mkdir -p $${work}/EFI/OC/ACPI
 cp -f $(locations :ACPI) $${work}/EFI/OC/ACPI/
@@ -47,49 +83,6 @@ mv -f $${work}/EFI/BOOT/BOOTx64.efi $${work}/EFI/BOOT/BOOTX64.efi
 """,
     visibility = ["//visibility:public"],
 )
-
-genrule(
-    name = "rootfs2",
-    srcs = [
-        "config.plist",
-        "startup.nsh",
-        ":ACPI",
-        "@com_github_acidanthera_opencore//:all",
-    ] + glob(["kexts/**"]),
-    outs = ["rootfs2.zip"],
-    cmd = """\
-sandbox=$${PWD}
-work=$$(mktemp -d $(RULEDIR)/.work.XXXXXX)
-function clean() {
-    rm -rf $${work}
-}
-trap clean EXIT
-
-# EFI
-cp -rf external/com_github_acidanthera_opencore/EFI $${work}/
-cp $(execpath :startup.nsh) $${work}/
-
-# Bootloader
-cp -rf external/com_github_acidanthera_opencore/Utilities/LegacyBoot/boot $${work}/
-
-mkdir -p $${work}/EFI/OC/Kexts
-cp -rf ./opencore/kexts/* $${work}/EFI/OC/Kexts/
-cp -rf $(location config.plist) $${work}/EFI/OC/
-
-mkdir -p $${work}/EFI/OC/ACPI
-cp -f $(locations :ACPI) $${work}/EFI/OC/ACPI/
-
-mv -f $${work}/EFI/BOOT/BOOTx64.efi $${work}/EFI/BOOT/BOOTX64.efi
-
-(
-    cd $${work}
-    find .
-    zip -qq -0 -r $${sandbox}/$(@) *
-)
-""",
-    visibility = ["//visibility:public"],
-)
-
 
 genrule(
     name = "image.noboot",
