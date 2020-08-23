@@ -1,2 +1,4 @@
-build:intel     --//opencore:cpu=intel
+build           --//linuxkit:format=raw-efi
+build           --//opencore:cpu=intel
+
 build:amd       --//opencore:cpu=amd
