@@ -10,6 +10,19 @@ filegroup(
 """
 
 http_archive(
+    name = "bazel_skylib",
+    sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
+        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
+    ],
+)
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+bazel_skylib_workspace()
+
+http_archive(
     name = "com_github_acidanthera_lilu",
     build_file_content = _EXPORTS_ALL,
     sha256 = "a7c5463293ea80bd689293169d1929d117ec1095e37ee646018fe1927a9a6eeb",
