@@ -45,9 +45,9 @@ http_archive(
 
 http_file(
     name = "com_github_linuxkit_linuxkit",
-    urls = ["https://github.com/linuxkit/linuxkit/releases/download/v0.8/linuxkit-darwin-amd64"],
-    sha256 = "4dc05ee018f66da9307e996448160166f022ae66b11df6c4c529e8e0f0b1cc34",
     executable = True,
+    sha256 = "4dc05ee018f66da9307e996448160166f022ae66b11df6c4c529e8e0f0b1cc34",
+    urls = ["https://github.com/linuxkit/linuxkit/releases/download/v0.8/linuxkit-darwin-amd64"],
 )
 
 new_git_repository(
@@ -60,15 +60,13 @@ py_binary(
     visibility = ["//visibility:public"],
 )
     """,
-    shallow_since = "1596052888 -0700",
     commit = "e71ade7e92f4aaf5d50cfe488fadb12ddb107d55",
     remote = "https://github.com/munki/macadmin-scripts",
+    shallow_since = "1596052888 -0700",
 )
 
 new_git_repository(
     name = "com_github_magervalp_autodmg",
-    remote = "https://github.com/MagerValp/AutoDMG.git",
-    commit = "e5fc641b2f38be742ab083d5d5f1cb952a30af89",
     build_file_content = """\
 sh_binary(
     name = "installesdtodmg",
@@ -76,6 +74,8 @@ sh_binary(
     visibility = ["//visibility:public"],
 )
     """,
+    commit = "e5fc641b2f38be742ab083d5d5f1cb952a30af89",
+    remote = "https://github.com/MagerValp/AutoDMG.git",
     shallow_since = "1566401762 +0200",
 )
 
@@ -88,7 +88,7 @@ http_archive(
     ],
 )
 
-load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_toolchains")
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
 go_rules_dependencies()
 
