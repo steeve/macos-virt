@@ -1,14 +1,13 @@
 sh_binary(
     name = "mkimage",
     srcs = ["mkimage.sh"],
-    data = [
-        "@com_github_magervalp_autodmg//:installesdtodmg",
-    ],
     args = [
         "$(location @com_github_magervalp_autodmg//:installesdtodmg)",
     ],
+    data = [
+        "@com_github_magervalp_autodmg//:installesdtodmg",
+    ],
 )
-
 
 sh_binary(
     name = "mkinstaller",
