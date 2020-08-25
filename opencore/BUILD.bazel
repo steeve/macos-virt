@@ -68,6 +68,8 @@ cp -rf external/com_github_acidanthera_opencore/Utilities/LegacyBoot/boot $${wor
 mkdir -p $${work}/EFI/OC/Kexts
 cp -rf external/com_github_acidanthera_lilu/Lilu.kext $${work}/EFI/OC/Kexts/
 cp -rf external/com_github_acidanthera_virtualsmc/Kexts/VirtualSMC.kext $${work}/EFI/OC/Kexts/
+cp -rf external/com_github_acidanthera_virtualsmc/Kexts/SMCProcessor.kext $${work}/EFI/OC/Kexts/
+cp -rf external/com_github_acidanthera_virtualsmc/Kexts/SMCSuperIO.kext $${work}/EFI/OC/Kexts/
 cp -rf $(location :config) $${work}/EFI/OC/config.plist
 
 mkdir -p $${work}/EFI/OC/ACPI
